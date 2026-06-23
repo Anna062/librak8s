@@ -2,11 +2,11 @@ name: Infra — Terraform
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
     paths:
       - 'infra/**'            # déclenché UNIQUEMENT si infra/ change
   pull_request:
-    branches: [main]
+    branches: [develop]
     paths:
       - 'infra/**'
 
@@ -66,9 +66,9 @@ jobs:
               body: `### Terraform Plan\n\`\`\`\n${plan}\n\`\`\``
             });
 
-      # Apply uniquement sur push dans main
+      # Apply uniquement sur push dans develop
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
         run: terraform apply -auto-approve tfplan
         env:
           ARM_USE_OIDC: true
