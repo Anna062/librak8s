@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: librak8s-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: librak8s-db
+  strategy:
+    type: Recreate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge:       1
+  template:
+    metadata:
+      labels:
+        app: librak8s-db
+    spec:
+      containers:
+        - name:            librak8s-api-db
+          image:           postgres
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+
+          envFrom:
+            - configMapRef:
+                name: librak8s-api-config
+
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: librak8s-api-secret
+                  key: DB_PASSWORD

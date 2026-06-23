@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: librak8s
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  datasource:
+    url: ${DB_URL}
+    username: librak8s
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+    hikari:
+      max-lifetime: 600000
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-test-query: "SELECT 1"
+
+# ─── JWT ─────────────────────────────────────────────────────────────────────
+jwt:
+  # Clé HMAC-SHA256 encodée en Base64 (256 bits minimum)
+  # En prod, injecter via la variable d'environnement JWT_SECRET
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+  expiration: ${JWT_EXPIRATION:86400000}   # 24 h en millisecondes
+
+# ─── Actuator (K8s probes) ───────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+# ─── SpringDoc / Swagger UI ───────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+
+logging:
+  level:
+    com.librak8s: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+
+# ─── Info endpoint ───────────────────────────────────────────────────────────
+info:
+  app:
+    name: LibraK8s
+    version: 1.0.0
+    description: API de gestion de bibliothèque — TP Kubernetes

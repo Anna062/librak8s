@@ -1,0 +1,130 @@
+name: App — Build & Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'k8s/**'
+      - 'Dockerfile'
+      - 'nginx.conf'
+  # Enchaîne aussi si Terraform vient de tourner (nouvelle infra)
+  workflow_run:
+    workflows: ["Infra — Terraform"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  # ── Job 1 : lit les outputs Terraform sans modifier l'infra ──
+  get-infra:
+    runs-on: ubuntu-latest
+    # Si déclenché par workflow_run, ne tourne que si Terraform a réussi
+    if: >
+      github.event_name == 'push' ||
+      github.event.workflow_run.conclusion == 'success'
+    outputs:
+      acr-server: ${{ steps.tf.outputs.acr_login_server }}
+      aks-name:   ${{ steps.tf.outputs.aks_cluster_name }}
+      rg-name:    ${{ steps.tf.outputs.resource_group_name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: ./infra
+        run: terraform init
+        env:
+          ARM_USE_OIDC: true
+
+      - name: Lire les outputs
+        id: tf
+        working-directory: ./infra
+        run: |
+          echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
+          echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
+          echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+        env:
+          ARM_USE_OIDC: true
+
+  # ── Job 2 : build et push l'image Docker ─────────────────────
+  build-push:
+    needs: get-infra
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.tag.outputs.value }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login ACR
+        run: az acr login --name ${{ needs.get-infra.outputs.acr-server }}
+
+      - name: Définir le tag image
+        id: tag
+        run: |
+          echo "value=${{ needs.get-infra.outputs.acr-server }}/react-app:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build & Push
+        run: |
+          docker build -t ${{ steps.tag.outputs.value }} .
+          docker push ${{ steps.tag.outputs.value }}
+
+  # ── Job 3 : déploiement sur AKS ──────────────────────────────
+  deploy:
+    needs: [get-infra, build-push]
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup kubectl
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ needs.get-infra.outputs.rg-name }} \
+            --name ${{ needs.get-infra.outputs.aks-name }} --overwrite-existing
+
+      - name: Créer le namespace si absent
+        run: |
+          kubectl get namespace production || kubectl create namespace production
+
+      - name: Injecter ACR server et tag dans les manifestes
+        run: |
+          sed -i "s|__ACR_SERVER__|${{ needs.get-infra.outputs.acr-server }}|g" k8s/deployment.yaml
+          sed -i "s|__IMAGE_TAG__|${{ github.sha }}|g" k8s/deployment.yaml
+
+      - name: Apply manifestes
+        run: kubectl apply -f k8s/
+
+      - name: Attendre le rollout
+        run: |
+          kubectl rollout status deployment/react-app --namespace production --timeout=3m

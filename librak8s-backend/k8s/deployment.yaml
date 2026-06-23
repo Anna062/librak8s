@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind:       Deployment
+metadata:
+  name:      librak8s-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: librak8s-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge:       1
+  template:
+    metadata:
+      labels:
+        app: librak8s-api
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name:            api
+          image:           ghcr.io/Anna062/librak8s-backend:main
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+
+          envFrom:
+            - configMapRef:
+                name: librak8s-api-config
+
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: librak8s-api-secret
+                  key:  DB_PASSWORD
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: librak8s-api-secret
+                  key:  JWT_SECRET
+
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu:    "250m"
+            limits:
+              memory: "512Mi"
+              cpu:    "500m"
+
+              # Readiness : prêt à recevoir du trafic ?
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds:       5
+            failureThreshold:    3
+
+            # Liveness : encore en vie ? (sinon kubelet redémarre)
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds:       10
+            failureThreshold:    3
+
+
+#  kubectl create secret docker-registry ghcr-secret \
+#  --docker-server=ghcr.io \
+#  --docker-username=VOTRE_USERNAME \
+#  --docker-password=VOTRE_GITHUB_TOKEN \
+#  --docker-email=VOTRE_EMAIL
