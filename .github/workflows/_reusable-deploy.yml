@@ -1,0 +1,145 @@
+name: Reusable — Deploy
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        description: "Nom de l'image Docker et du deployment K8s"
+        type: string
+        required: true
+      namespace:
+        description: "Namespace Kubernetes"
+        type: string
+        required: true
+      k8s-dir:
+        description: "Chemin vers les manifestes K8s"
+        type: string
+        required: true
+      working-dir:
+        description: "Dossier de l'app (front/ ou back/)"
+        type: string
+        required: true
+      java-app:
+        description: "True si c'est une app Java (build Maven avant Docker)"
+        type: boolean
+        required: false
+        default: false
+
+    secrets:
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
+
+jobs:
+  # Récupère les outputs Terraform
+  get-infra:
+    runs-on: ubuntu-latest
+    outputs:
+      acr-server: ${{ steps.tf.outputs.acr_login_server }}
+      aks-name:   ${{ steps.tf.outputs.aks_cluster_name }}
+      rg-name:    ${{ steps.tf.outputs.resource_group_name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with: { terraform_wrapper: false }
+
+      - run: terraform init
+        working-directory: ./infra
+        env: { ARM_USE_OIDC: true }
+
+      - name: Lire les outputs
+        id: tf
+        working-directory: ./infra
+        run: |
+          echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
+          echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
+          echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+        env: { ARM_USE_OIDC: true }
+
+  # Build et push l'image Docker
+  build-push:
+    needs: get-infra
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.tag.outputs.value }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - run: az acr login --name ${{ needs.get-infra.outputs.acr-server }}
+
+      # Setup Java uniquement si c'est une app Java
+      - name: Setup Java
+        if: ${{ inputs.java-app }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build JAR (Java seulement)
+        if: ${{ inputs.java-app }}
+        run: mvn package -DskipTests
+        working-directory: ${{ inputs.working-dir }}
+
+      - name: Définir le tag
+        id: tag
+        run: |
+          echo "value=${{ needs.get-infra.outputs.acr-server }}/${{ inputs.app-name }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build & Push
+        run: |
+          docker build -t ${{ steps.tag.outputs.value }} ${{ inputs.working-dir }}
+          docker push ${{ steps.tag.outputs.value }}
+
+  # Déploiement sur AKS
+  deploy:
+    needs: [get-infra, build-push]
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup kubectl
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ needs.get-infra.outputs.rg-name }} \
+            --name ${{ needs.get-infra.outputs.aks-name }} \
+            --overwrite-existing
+
+      - name: Injecter les valeurs
+        run: |
+          sed -i "s|__ACR_SERVER__|${{ needs.get-infra.outputs.acr-server }}|g" ${{ inputs.k8s-dir }}/deployment.yaml
+          sed -i "s|__IMAGE_TAG__|${{ github.sha }}|g" ${{ inputs.k8s-dir }}/deployment.yaml
+
+      - run: kubectl apply -f ${{ inputs.k8s-dir }}/
+
+      - name: Attendre le rollout
+        run: |
+          kubectl rollout status deployment/${{ inputs.app-name }} \
+            --namespace ${{ inputs.namespace }} \
+            --timeout=3m

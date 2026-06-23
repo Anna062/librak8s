@@ -1,0 +1,26 @@
+name: Deploy — librak8s-react
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - 'librak8s-react/**'
+      - '.github/workflows/deploy-front.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_reusable-deploy.yml
+    with:
+      app-name:    "librak8s-react"
+      namespace:   "front"
+      k8s-dir:     "./librak8s-react/k8s"
+      working-dir: "./librak8s-react"
+      java-app:    false
+    secrets:
+      AZURE_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}

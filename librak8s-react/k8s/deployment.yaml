@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name:            librak8s-react
-          image:           librak8s-react:1.0.0
+          image:           __ACR_SERVER__/librak8s-react:__IMAGE_TAG__
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80

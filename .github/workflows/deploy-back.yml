@@ -1,0 +1,26 @@
+name: Deploy — librak8s-api
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'librak8s-backend/**'
+      - '.github/workflows/deploy-back.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/_reusable-deploy.yml
+    with:
+      app-name:    "librak8s-api"
+      namespace:   "back"
+      k8s-dir:     "./librak8s-backend/k8s"
+      working-dir: "./librak8s-backend"
+      java-app:    true
+    secrets:
+      AZURE_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}

@@ -22,7 +22,7 @@ spec:
         - name: ghcr-secret
       containers:
         - name:            api
-          image:           ghcr.io/Anna062/librak8s-backend:main
+          image:           __ACR_SERVER__/librak8s-backend:__IMAGE_TAG__
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

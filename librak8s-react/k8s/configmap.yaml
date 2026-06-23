@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: librak8s-api-config
-  namespace: front
-data:
-  VITE_API_URL: "http://librak8s-api-service"
