@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: librak8s-db
+  namespace: back
 spec:
   replicas: 1
   selector:

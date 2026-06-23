@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind:       Deployment
 metadata:
   name:      librak8s-api
+  namespace: back
 spec:
   replicas: 3
   selector:
@@ -69,10 +70,3 @@ spec:
             initialDelaySeconds: 30
             periodSeconds:       10
             failureThreshold:    3
-
-
-#  kubectl create secret docker-registry ghcr-secret \
-#  --docker-server=ghcr.io \
-#  --docker-username=VOTRE_USERNAME \
-#  --docker-password=VOTRE_GITHUB_TOKEN \
-#  --docker-email=VOTRE_EMAIL
