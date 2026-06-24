@@ -128,7 +128,6 @@ jobs:
           docker build -t ${{ steps.tag.outputs.value }} ${{ inputs.working-dir }}
           docker push ${{ steps.tag.outputs.value }}
 
-  # Déploiement sur AKS
   deploy:
     needs: [get-infra, build-push]
     runs-on: ubuntu-latest

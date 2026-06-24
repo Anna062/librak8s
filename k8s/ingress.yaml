@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: front-proxy
-  namespace: default
+  namespace: ingress-nginx
 spec:
   type: ExternalName
   externalName: librak8s-react-svc.front.svc.cluster.local
@@ -15,7 +15,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: back-proxy
-  namespace: default
+  namespace: ingress-nginx
 spec:
   type: ExternalName
   externalName: librak8s-api-svc.back.svc.cluster.local
@@ -28,7 +28,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: librak8s-ingress
-  namespace: default
+  namespace: ingress-nginx
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
