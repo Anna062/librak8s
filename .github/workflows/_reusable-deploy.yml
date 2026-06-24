@@ -95,11 +95,12 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Login ACR via token Azure
-        run: |
-          TOKEN=$(az acr get-login-password --resource-group ${{ needs.get-infra.outputs.rg-name }})
-          echo $TOKEN | docker login ${{ needs.get-infra.outputs.acr-server }} \
-            --username 00000000-0000-0000-0000-000000000000 --password-stdin
+      - name: Login ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ needs.get-infra.outputs.acr-server }}
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       # Setup Java uniquement si c'est une app Java
       - name: Setup Java
