@@ -6,6 +6,7 @@ on:
     paths:
       - 'librak8s-react/**'
       - '.github/workflows/deploy-front.yml'
+      - '.github/workflows/_reusable-deploy.yml'
 
 permissions:
   id-token: write
