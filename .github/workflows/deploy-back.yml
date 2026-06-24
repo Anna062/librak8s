@@ -6,12 +6,12 @@ on:
     paths:
       - 'librak8s-backend/**'
       - '.github/workflows/deploy-back.yml'
+      - '.github/workflows/_reusable-deploy.yml'
 
 permissions:
   id-token: write
   contents: read
 
-# Pour lancer les jobs
 jobs:
   deploy:
     uses: ./.github/workflows/_reusable-deploy.yml

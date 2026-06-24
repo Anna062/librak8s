@@ -38,9 +38,9 @@ jobs:
   get-infra:
     runs-on: ubuntu-latest
     outputs:
-      acr-server: ${{ steps.tf.outputs.acr_login_server }}
-      aks-name:   ${{ steps.tf.outputs.aks_cluster_name }}
-      rg-name:    ${{ steps.tf.outputs.resource_group_name }}
+      acr-server: librak8sacr
+      aks-name:   librak8s-aks
+      rg-name:    librak8s-rg
 
     steps:
       - uses: actions/checkout@v4
@@ -66,6 +66,11 @@ jobs:
           echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> "$GITHUB_OUTPUT"
           echo "resource_group_name=$(terraform output -raw resource_group_name)" >> "$GITHUB_OUTPUT"
         env: { ARM_USE_OIDC: true }
+
+      - name: Debug outputs
+        run: |
+          echo "ACR=${{ steps.tf.outputs.acr_login_server }}"
+          echo "AKS=${{ steps.tf.outputs.aks_cluster_name }}"
 
   # Build et push l'image Docker
   build-push:
