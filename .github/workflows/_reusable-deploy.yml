@@ -82,12 +82,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: azure/login@v3
-        with:
-          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
       - name: Login Azure
         uses: azure/login@v3
         with:
@@ -127,7 +121,7 @@ jobs:
       - name: Définir le tag
         id: tag
         run: |
-          echo "value=${{ needs.get-infra.outputs.acr-server }}/${{ inputs.app-name }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "value=${{ needs.get-infra.outputs.acr-server }}.azurecr.io/${{ inputs.app-name }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Build & Push
         run: |
@@ -158,7 +152,7 @@ jobs:
 
       - name: Injecter les valeurs
         run: |
-          sed -i "s|__ACR_SERVER__|${{ needs.get-infra.outputs.acr-server }}|g" ${{ inputs.k8s-dir }}/deployment.yaml
+          sed -i "s|__ACR_SERVER__|${{ needs.get-infra.outputs.acr-server }}.azurecr.io|g" ${{ inputs.k8s-dir }}/deployment.yaml
           sed -i "s|__IMAGE_TAG__|${{ github.sha }}|g" ${{ inputs.k8s-dir }}/deployment.yaml
 
       - run: kubectl apply -f ${{ inputs.k8s-dir }}/
