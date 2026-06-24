@@ -152,6 +152,9 @@ jobs:
       - name: Injecter les valeurs
         run: sed -i "s|__IMAGE_TAG__|${{ needs.build-push.outputs.image }}|g" ${{ inputs.k8s-dir }}/deployment.yaml
 
+      - name: Appliquer l'Ingress (idempotent)
+        run: kubectl apply -f k8s/ingress.yaml
+
       - run: kubectl apply -f ${{ inputs.k8s-dir }}/
 
       - name: Attendre le rollout
