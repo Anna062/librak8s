@@ -12,10 +12,6 @@ RUN mvn package -DskipTests -q
 FROM eclipse-temurin:21-jre-alpine AS runner
 WORKDIR /app
 
-# Utilisateur non-root pour la sécurité
-RUN addgroup -S librak8s && adduser -S librak8s -G librak8s
-USER librak8s
-
 COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8080
