@@ -16,16 +16,8 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-    hikari:
-      max-lifetime: 600000
-      maximum-pool-size: 10
-      minimum-idle: 2
-      connection-test-query: "SELECT 1"
-
 # ─── JWT ─────────────────────────────────────────────────────────────────────
 jwt:
-  # Clé HMAC-SHA256 encodée en Base64 (256 bits minimum)
-  # En prod, injecter via la variable d'environnement JWT_SECRET
   secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
   expiration: ${JWT_EXPIRATION:86400000}   # 24 h en millisecondes
 
