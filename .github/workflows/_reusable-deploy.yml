@@ -132,7 +132,6 @@ jobs:
   deploy:
     needs: [get-infra, build-push]
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
       - uses: actions/checkout@v4
@@ -160,5 +159,4 @@ jobs:
       - name: Attendre le rollout
         run: |
           kubectl rollout status deployment/${{ inputs.app-name }} \
-            --namespace ${{ inputs.namespace }} \
-            --timeout=3m
+            --namespace ${{ inputs.namespace }} --timeout=3m
