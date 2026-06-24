@@ -151,8 +151,7 @@ jobs:
 
       - name: Injecter les valeurs
         run: |
-          sed -i "s|__ACR_SERVER__|${{ needs.get-infra.outputs.acr-server }}.azurecr.io|g" ${{ inputs.k8s-dir }}/deployment.yaml
-          sed -i "s|__IMAGE_TAG__|${{ github.sha }}|g" ${{ inputs.k8s-dir }}/deployment.yaml
+          sed -i "s|__IMAGE_TAG__|${{ needs.build-push.outputs.image }}
 
       - run: kubectl apply -f ${{ inputs.k8s-dir }}/
 
