@@ -150,8 +150,7 @@ jobs:
             --overwrite-existing
 
       - name: Injecter les valeurs
-        run: |
-          sed -i "s|__IMAGE_TAG__|${{ needs.build-push.outputs.image }}
+        run: sed -i "s|__IMAGE_TAG__|${{ needs.build-push.outputs.image }}|g" ${{ inputs.k8s-dir }}/deployment.yaml
 
       - run: kubectl apply -f ${{ inputs.k8s-dir }}/
 

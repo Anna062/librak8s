@@ -12,7 +12,6 @@ permissions:
   id-token: write
   contents: read
 
-#Test
 jobs:
   deploy:
     uses: ./.github/workflows/_reusable-deploy.yml
