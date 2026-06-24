@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name:            librak8s-react
-          image:           __ACR_SERVER__/librak8s-react:__IMAGE_TAG__
+          image:           __IMAGE_TAG__
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
@@ -37,7 +37,7 @@ spec:
             httpGet:
               path: /
               port: 80
-            initialDelaySeconds: 15
+            initialDelaySeconds: 60
             periodSeconds:       5
             failureThreshold:    3
 
@@ -45,6 +45,6 @@ spec:
             httpGet:
               path: /
               port: 80
-            initialDelaySeconds: 30
+            initialDelaySeconds: 80
             periodSeconds:       10
             failureThreshold:    3
