@@ -34,7 +34,6 @@ on:
         required: true
 
 jobs:
-  # Récupère les outputs Terraform
   get-infra:
     runs-on: ubuntu-latest
     outputs:
