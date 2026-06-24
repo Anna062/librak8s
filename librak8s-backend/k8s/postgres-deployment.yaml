@@ -10,9 +10,7 @@ spec:
       app: librak8s-db
   strategy:
     type: Recreate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge:       1
+
   template:
     metadata:
       labels:
