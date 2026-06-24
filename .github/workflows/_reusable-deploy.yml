@@ -62,9 +62,9 @@ jobs:
         id: tf
         working-directory: ./infra
         run: |
-          echo "acr_login_server=$(terraform output -raw acr_login_server)" >> $GITHUB_OUTPUT
-          echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
-          echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+          echo "acr_login_server=$(terraform output -raw acr_login_server)" >> "$GITHUB_OUTPUT"
+          echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> "$GITHUB_OUTPUT"
+          echo "resource_group_name=$(terraform output -raw resource_group_name)" >> "$GITHUB_OUTPUT"
         env: { ARM_USE_OIDC: true }
 
   # Build et push l'image Docker
@@ -102,7 +102,7 @@ jobs:
       - name: Définir le tag
         id: tag
         run: |
-          echo "value=${{ needs.get-infra.outputs.acr-server }}/${{ inputs.app-name }}:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "value=${{ needs.get-infra.outputs.acr-server }}/${{ inputs.app-name }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Build & Push
         run: |
