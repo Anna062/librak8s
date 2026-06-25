@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { toast } from '@/components/ui/use-toast'
-import { Book } from "@/features/books/types"
+import {Book} from "@/features/books/types"
 
 const schema = z.object({
   title: z.string().min(1, 'Titre requis'),

@@ -11,7 +11,7 @@ export interface CreateBookRequest {
   title: string
   author: string
   isbn: string
-  availableCopies: number
+  totalCopies: number
 }
 
 export interface UpdateBookRequest {

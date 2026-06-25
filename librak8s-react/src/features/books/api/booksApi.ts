@@ -9,11 +9,7 @@ export const booksApi = {
     apiClient.get<Book>(`/api/books/${id}`).then((r) => r.data),
 
   create: (data: CreateBookRequest) =>
-    apiClient.post<Book>('/api/books', data).then((r) => {
-      console.log(r.data);
-
-      return r.data;
-    }),
+    apiClient.post<Book>('/api/books', data).then((r) => r.data),
 
   update: (id: number, data: UpdateBookRequest) =>
     apiClient.put<Book>(`/api/books/${id}`, data).then((r) => r.data),
