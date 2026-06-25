@@ -179,7 +179,7 @@ curl -X POST http://localhost:8080/api/books \
     "title": "Kubernetes in Action",
     "author": "Marko Luksa",
     "isbn": "978-1617293726",
-    "availableCopies": 5
+    "totalCopies": 5
   }'
 ```
 

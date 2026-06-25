@@ -12,7 +12,7 @@ spring:
 
   datasource:
     url: ${DB_URL}
-    username: librak8s
+    username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
@@ -58,3 +58,16 @@ info:
     name: LibraK8s
     version: 1.0.0
     description: API de gestion de bibliothèque — TP Kubernetes
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    hikari:
+      max-lifetime: 600000
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-test-query: "SELECT 1"
