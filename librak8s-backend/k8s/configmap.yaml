@@ -5,6 +5,6 @@ metadata:
   name: librak8s-api-config
   namespace: back
 data:
-  DB_URL: "jdbc:postgresql://ep-tiny-hat-ahbxu5td-pooler.c-3.us-east-1.aws.neon.tech/librak8s?sslmode=require&channelBinding=require"
+  DB_URL: "jdbc:postgresql://librak8s-db.postgres.database.azure.com:5432/librak8s?sslmode=require&channelBinding=require"
   DB_USER: "librak8s"
   DB_HOST: "librak8s-db.default.svc.cluster.local"

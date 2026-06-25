@@ -4,6 +4,7 @@ import com.librak8s.application.dto.LoginRequest;
 import com.librak8s.application.dto.LoginResponse;
 import com.librak8s.application.dto.RegisterRequest;
 import com.librak8s.domain.exception.UserAlreadyExistsException;
+import com.librak8s.domain.exception.UserNotFoundException;
 import com.librak8s.domain.model.User;
 import com.librak8s.domain.port.TokenService;
 import com.librak8s.domain.port.UserRepository;
@@ -35,11 +36,16 @@ public class AuthApplicationService {
     }
 
     public LoginResponse login(LoginRequest request) {
+        final String username = request.username();
+        final User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.username(), request.password())
+                new UsernamePasswordAuthenticationToken(username, request.password())
         );
-        String token = tokenService.generateToken(request.username());
-        return LoginResponse.of(token, tokenService.getExpiration());
+
+        String token = tokenService.generateToken(username);
+        return LoginResponse.of(token, tokenService.getExpiration(), user.getRole(), username);
     }
 
     private String normalizeRole(String role) {
