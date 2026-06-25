@@ -1,4 +1,4 @@
-import { BookOpen, Trash2 } from 'lucide-react'
+import { BookOpen, Pencil, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { Book } from '../types'
 import { useAuthStore } from '@/shared/store/authStore'
@@ -11,9 +11,10 @@ import { toast } from '@/components/ui/use-toast'
 
 interface Props {
   book: Book
+  onEdit?: (book: Book) => void
 }
 
-export function BookCard({ book }: Props) {
+export function BookCard({ book, onEdit }: Props) {
   const user = useAuthStore((s) => s.user)
   const isAdmin = user?.role === 'ROLE_ADMIN'
   const { mutate: borrow, isPending: isBorrowing } = useBorrowBook()
@@ -60,23 +61,34 @@ export function BookCard({ book }: Props) {
         </div>
       </CardContent>
       <CardFooter className="gap-2">
-        <Button
-          size="sm"
-          disabled={book.availableCopies === 0 || isBorrowing}
-          onClick={handleBorrow}
-          className="flex-1"
-        >
-          {isBorrowing ? 'En cours…' : 'Emprunter'}
-        </Button>
-        {isAdmin && (
+        {!isAdmin && (
           <Button
             size="sm"
-            variant="destructive"
-            disabled={isDeleting}
-            onClick={handleDelete}
+            disabled={book.availableCopies === 0 || isBorrowing}
+            onClick={handleBorrow}
+            className="flex-1"
           >
-            <Trash2 className="h-4 w-4" />
+            {isBorrowing ? 'En cours…' : 'Emprunter'}
           </Button>
+        )}
+        {isAdmin && (
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onEdit?.(book)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={isDeleting}
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </>
         )}
       </CardFooter>
     </Card>

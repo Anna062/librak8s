@@ -2,10 +2,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCreateBook } from '../hooks/useCreateBook'
+import { useUpdateBook } from '../hooks/useUpdateBook'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { toast } from '@/components/ui/use-toast'
+import { Book } from "@/features/books/types"
 
 const schema = z.object({
   title: z.string().min(1, 'Titre requis'),
@@ -18,24 +20,44 @@ type FormValues = z.infer<typeof schema>
 
 interface Props {
   onSuccess?: () => void
+  book?: Book
 }
 
-export function BookForm({ onSuccess }: Props) {
-  const { mutate, isPending } = useCreateBook()
+export function BookForm({ onSuccess, book }: Props) {
+  const isEditing = !!book
+  const { mutate: create, isPending: isCreating } = useCreateBook()
+  const { mutate: update, isPending: isUpdating } = useUpdateBook()
+  const isPending = isCreating || isUpdating
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { totalCopies: 1 },
+    defaultValues: book
+      ? { title: book.title, author: book.author, isbn: book.isbn, totalCopies: book.totalCopies }
+      : { totalCopies: 1 },
   })
 
   function onSubmit(values: FormValues) {
-    mutate(values, {
-      onSuccess: () => {
-        toast.success('Livre ajouté', `"${values.title}" a été ajouté.`)
-        form.reset()
-        onSuccess?.()
-      },
-      onError: () => toast.error('Erreur', 'Impossible d\'ajouter ce livre'),
-    })
+    if (isEditing) {
+      update(
+        { id: book.id, data: values },
+        {
+          onSuccess: () => {
+            toast.success('Livre modifié', `"${values.title}" a été modifié.`)
+            onSuccess?.()
+          },
+          onError: () => toast.error('Erreur', 'Impossible de modifier ce livre'),
+        }
+      )
+    } else {
+      create(values, {
+        onSuccess: () => {
+          toast.success('Livre ajouté', `"${values.title}" a été ajouté.`)
+          form.reset()
+          onSuccess?.()
+        },
+        onError: () => toast.error('Erreur', 'Impossible d\'ajouter ce livre'),
+      })
+    }
   }
 
   return (
@@ -94,7 +116,9 @@ export function BookForm({ onSuccess }: Props) {
           )}
         />
         <Button type="submit" className="w-full" disabled={isPending}>
-          {isPending ? 'Ajout…' : 'Ajouter le livre'}
+          {isPending
+            ? (isEditing ? 'Modification…' : 'Ajout…')
+            : (isEditing ? 'Modifier le livre' : 'Ajouter le livre')}
         </Button>
       </form>
     </Form>

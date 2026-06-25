@@ -1,5 +1,5 @@
 import apiClient from '@/shared/lib/axios'
-import type { Book, CreateBookRequest } from '../types'
+import type { Book, CreateBookRequest, UpdateBookRequest } from '../types'
 
 export const booksApi = {
   getAll: () =>
@@ -9,7 +9,14 @@ export const booksApi = {
     apiClient.get<Book>(`/api/books/${id}`).then((r) => r.data),
 
   create: (data: CreateBookRequest) =>
-    apiClient.post<Book>('/api/books', data).then((r) => r.data),
+    apiClient.post<Book>('/api/books', data).then((r) => {
+      console.log(r.data);
+
+      return r.data;
+    }),
+
+  update: (id: number, data: UpdateBookRequest) =>
+    apiClient.put<Book>(`/api/books/${id}`, data).then((r) => r.data),
 
   remove: (id: number) =>
     apiClient.delete(`/api/books/${id}`).then((r) => r.data),
